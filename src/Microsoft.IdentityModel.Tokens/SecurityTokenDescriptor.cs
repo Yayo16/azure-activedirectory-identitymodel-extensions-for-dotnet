@@ -95,6 +95,19 @@ namespace Microsoft.IdentityModel.Tokens
         public IDictionary<string, object> AdditionalInnerHeaderClaims { get; set; }
 
         /// <summary>
+        /// Gets or sets the <see cref="HashSet{T}"/> which contains the default header claims that should be excluded from the JWT header.
+        /// </summary>
+        /// <remarks>
+        /// The possible default header claims are <c>alg</c>, <c>kid</c>, <c>x5t</c>, <c>enc</c>, and <c>zip</c>. Note that
+        /// these are not necessarily present in the header of every token.
+        ///
+        /// The <c>kid</c> and <c>x5t</c> claims can also be excluded by setting <see cref="IncludeKeyIdInHeader"/> to <c>false</c>.
+        /// </remarks>
+#pragma warning disable CA2227 // Collection properties should be read only
+        public ISet<string> ExcludedDefaultHeaderClaims { get; set; }
+#pragma warning restore CA2227 // Collection properties should be read only
+
+        /// <summary>
         /// Gets or sets the <see cref="SigningCredentials"/> used to create a security token.
         /// </summary>
         public SigningCredentials SigningCredentials { get; set; }
@@ -108,10 +121,13 @@ namespace Microsoft.IdentityModel.Tokens
         public ClaimsIdentity Subject { get; set; }
 
         /// <summary>
-        /// Indicates if <c>kid</c> and <c>x5t</c> should be included in the header of a JSON web token (JWT)
+        /// Indicates if <c>kid</c> and <c>x5t</c> should be included in the header of a JSON web token (JWT).
         ///
         /// <remarks>
-        /// Only applies to JWTs
+        /// Only applies to JWTs.
+        ///
+        /// Requires that <c>kid</c> and/or <c>x5t</c> are not included in <see cref="ExcludedDefaultHeaderClaims"/>; otherwise,
+        /// whichever is/are included in <see cref="ExcludedDefaultHeaderClaims"/> will not be included in the header of the token.
         /// </remarks>
         /// </summary>
         [DefaultValue(true)]
