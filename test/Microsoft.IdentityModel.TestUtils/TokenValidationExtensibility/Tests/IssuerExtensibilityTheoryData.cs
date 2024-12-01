@@ -3,6 +3,7 @@
 
 using Microsoft.IdentityModel.Tokens;
 
+#nullable enable
 namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
 {
     public class IssuerExtensibilityTheoryData : ExtensibilityTheoryData
@@ -23,3 +24,4 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
         }
     }
 }
+#nullable restore

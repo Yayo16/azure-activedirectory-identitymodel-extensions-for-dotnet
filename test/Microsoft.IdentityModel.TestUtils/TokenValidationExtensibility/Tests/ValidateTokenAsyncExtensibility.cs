@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 
+#nullable enable
 namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
 {
     public partial class ExtensibilityTesting
@@ -71,3 +72,4 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
         }
     }
 }
+#nullable restore
