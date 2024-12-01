@@ -12,7 +12,7 @@ namespace Microsoft.IdentityModel.JsonWebTokens.Extensibility.Tests
     {
         [Theory, MemberData(
             nameof(GenerateAlgorithmExtensibilityTestCases),
-            parameters: ["JWT", 2],
+            parameters: ["JWT", 1],
             DisableDiscoveryEnumeration = true)]
         public async Task ValidateTokenAsync_AlgorithmValidator_Extensibility(
             AlgorithmExtensibilityTheoryData theoryData)

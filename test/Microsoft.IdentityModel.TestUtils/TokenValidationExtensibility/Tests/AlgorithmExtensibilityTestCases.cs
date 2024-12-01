@@ -7,6 +7,7 @@ using Xunit;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Logging;
 
+#nullable enable
 namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
 {
     public partial class ExtensibilityTesting
@@ -26,7 +27,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "CustomAlgorithmValidatorDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.CustomAlgorithmValidatorDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 ExpectedException = new ExpectedException(
                     typeof(SecurityTokenInvalidSignatureException),
@@ -49,7 +50,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "CustomAlgorithmValidatorCustomExceptionDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.CustomAlgorithmValidatorCustomExceptionDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 ExpectedException = new ExpectedException(
                     typeof(SecurityTokenInvalidSignatureException),
@@ -72,7 +73,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "CustomAlgorithmValidatorUnknownExceptionDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.CustomAlgorithmValidatorUnknownExceptionDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 // CustomAlgorithmValidationError does not handle the exception type 'NotSupportedException'
                 ExpectedException = new ExpectedException(
@@ -98,7 +99,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "CustomAlgorithmValidatorCustomExceptionCustomFailureTypeDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.CustomAlgorithmValidatorCustomExceptionCustomFailureTypeDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 ExpectedException = new ExpectedException(
                     typeof(SecurityTokenInvalidSignatureException),
@@ -124,7 +125,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "AlgorithmValidatorDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.AlgorithmValidatorDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 ExpectedException = new ExpectedException(
                     typeof(SecurityTokenInvalidSignatureException),
@@ -147,7 +148,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "AlgorithmValidatorCustomAlgorithmExceptionTypeDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.AlgorithmValidatorCustomAlgorithmExceptionTypeDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 // AlgorithmValidationError does not handle the exception type 'CustomSecurityTokenInvalidAlgorithmException'
                 ExpectedException = new ExpectedException(
@@ -173,7 +174,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "AlgorithmValidatorCustomExceptionTypeDelegate",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.AlgorithmValidatorCustomExceptionTypeDelegate,
-                extraStackFrames: 1)
+                extraStackFrames: extraStackFrames)
             {
                 // AlgorithmValidationError does not handle the exception type 'CustomSecurityTokenException'
                 ExpectedException = new ExpectedException(
@@ -199,7 +200,7 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
                 "AlgorithmValidatorThrows",
                 tokenHandlerType,
                 CustomAlgorithmValidationDelegates.AlgorithmValidatorThrows,
-                extraStackFrames: 2)
+                extraStackFrames: extraStackFrames + 1)
             {
                 ExpectedException = new ExpectedException(
                     typeof(SecurityTokenInvalidSignatureException),
@@ -224,3 +225,4 @@ namespace Microsoft.IdentityModel.TestUtils.TokenValidationExtensibility.Tests
         }
     }
 }
+#nullable restore
