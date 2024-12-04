@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-//using System;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -45,6 +44,7 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                 new OpenIdConnectConfigurationRetriever(),
                 theoryData.DocumentRetriever,
                 theoryData.ConfigurationValidator);
+
             try
             {
                 await configurationManager.GetConfigurationAsync();
@@ -132,7 +132,7 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
             var expectedTagsFound = false;
             foreach (Metric metric in exportedMetrics)
             {
-                if (!metric.Name.Equals(IdentityModelTelemetry.WilsonConfigurationManagerCounterName))
+                if (!metric.Name.Equals(IdentityModelTelemetry.IdentityModelConfigurationManagerCounterName))
                     continue;
 
                 foreach (MetricPoint metricPoint in metric.GetMetricPoints())

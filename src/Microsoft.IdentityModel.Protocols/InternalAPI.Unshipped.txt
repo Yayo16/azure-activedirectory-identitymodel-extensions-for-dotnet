@@ -1,1 +1,5 @@
-Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackGetConfiguration(long methodStartTicks, string refreshReason, string operationStatus, string exceptionType) -> void
+Microsoft.IdentityModel.Protocols.ConfigurationManager<T>._timeProvider -> System.TimeProvider
+static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRequestRefresh(string operationStatus) -> void
+static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRequestRefresh(string operationStatus, string exceptionType) -> void
+static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRetrievalDuration(System.TimeSpan duration) -> void
+static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRetrievalDuration(System.TimeSpan duration, string exception) -> void

@@ -35,6 +35,8 @@ namespace Microsoft.IdentityModel.Protocols
         private const int ConfigurationRetrieverRunning = 1;
         private int _configurationRetrieverState = ConfigurationRetrieverIdle;
 
+        internal TimeProvider _timeProvider = TimeProvider.System;
+
         /// <summary>
         /// Instantiates a new <see cref="ConfigurationManager{T}"/> that manages automatic and controls refreshing on configuration data.
         /// </summary>
@@ -147,12 +149,8 @@ namespace Microsoft.IdentityModel.Protocols
         /// <remarks>If the time since the last call is less than <see cref="BaseConfigurationManager.AutomaticRefreshInterval"/> then <see cref="IConfigurationRetriever{T}.GetConfigurationAsync"/> is not called and the current Configuration is returned.</remarks>
         public virtual async Task<T> GetConfigurationAsync(CancellationToken cancel)
         {
-            var methodStartTicks = WatchUtility.Watch.Elapsed.Ticks;
-
             if (_currentConfiguration != null && _syncAfter > DateTimeOffset.UtcNow)
             {
-                TrackGetConfiguration(
-                    methodStartTicks, IdentityModelTelemetryUtil.LKG, IdentityModelTelemetryUtil.Success, string.Empty);
                 return _currentConfiguration;
             }
 
@@ -170,8 +168,6 @@ namespace Microsoft.IdentityModel.Protocols
                 await _configurationNullLock.WaitAsync(cancel).ConfigureAwait(false);
                 if (_currentConfiguration != null)
                 {
-                    TrackGetConfiguration(
-                        methodStartTicks, IdentityModelTelemetryUtil.LKG, IdentityModelTelemetryUtil.Success, string.Empty);
                     _configurationNullLock.Release();
                     return _currentConfiguration;
                 }
@@ -180,7 +176,7 @@ namespace Microsoft.IdentityModel.Protocols
                 try
                 {
                     // Don't use the individual CT here, this is a shared operation that shouldn't be affected by an individual's cancellation.
-                    // The transport should have it's own timeouts, etc.
+                    // The transport should have its own timeouts, etc.
                     T configuration = await _configRetriever.GetConfigurationAsync(
                         MetadataAddress,
                         _docRetriever,
@@ -192,21 +188,29 @@ namespace Microsoft.IdentityModel.Protocols
                         // in this case we have never had a valid configuration, so we will throw an exception if the validation fails
                         if (!result.Succeeded)
                         {
-                            TrackGetConfiguration(
-                                methodStartTicks, IdentityModelTelemetryUtil.Requested, IdentityModelTelemetryUtil.Failure, IdentityModelTelemetryUtil.ConfigurationInvalid);
-                            throw LogHelper.LogExceptionMessage(
-                                new InvalidConfigurationException(
-                                    LogHelper.FormatInvariant(
-                                        LogMessages.IDX20810,
-                                        result.ErrorMessage)));
+                            var ex = new InvalidConfigurationException(
+                                LogHelper.FormatInvariant(
+                                    LogMessages.IDX20810,
+                                    result.ErrorMessage));
+
+                            TrackRequestRefresh(
+                                IdentityModelTelemetryUtil.FirstRefresh,
+                                ex.GetType().ToString());
+
+                            throw LogHelper.LogExceptionMessage(ex);
                         }
                     }
 
+                    TrackRequestRefresh(IdentityModelTelemetryUtil.FirstRefresh);
                     UpdateConfiguration(configuration);
                 }
                 catch (Exception ex)
                 {
+                    // counter for failure first time
                     fetchMetadataFailure = ex;
+                    TrackRequestRefresh(
+                        IdentityModelTelemetryUtil.FirstRefresh,
+                        ex.GetType().ToString());
 
                     LogHelper.LogExceptionMessage(
                         new InvalidOperationException(
@@ -233,13 +237,9 @@ namespace Microsoft.IdentityModel.Protocols
             // If metadata exists return it.
             if (_currentConfiguration != null)
             {
-                TrackGetConfiguration(
-                    methodStartTicks, IdentityModelTelemetryUtil.Requested, IdentityModelTelemetryUtil.Success, string.Empty);
                 return _currentConfiguration;
             }
 
-            TrackGetConfiguration(
-                methodStartTicks, IdentityModelTelemetryUtil.Requested, IdentityModelTelemetryUtil.Failure, IdentityModelTelemetryUtil.ConfigurationRetrievalFailed);
             throw LogHelper.LogExceptionMessage(
                 new InvalidOperationException(
                     LogHelper.FormatInvariant(
@@ -258,12 +258,17 @@ namespace Microsoft.IdentityModel.Protocols
         private void UpdateCurrentConfiguration()
         {
 #pragma warning disable CA1031 // Do not catch general exception types
+            long startTimestamp = _timeProvider.GetTimestamp();
+
             try
             {
                 T configuration = _configRetriever.GetConfigurationAsync(
                     MetadataAddress,
                     _docRetriever,
                     CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+
+                TimeSpan elapsedTime = _timeProvider.GetElapsedTime(startTimestamp);
+                TrackRetrievalDuration(elapsedTime);
 
                 if (_configValidator == null)
                 {
@@ -285,6 +290,9 @@ namespace Microsoft.IdentityModel.Protocols
             }
             catch (Exception ex)
             {
+                TimeSpan elapsedTime = _timeProvider.GetElapsedTime(startTimestamp);
+                TrackRetrievalDuration(elapsedTime, ex.GetType().ToString());
+
                 LogHelper.LogExceptionMessage(
                     new InvalidOperationException(
                         LogHelper.FormatInvariant(
@@ -329,6 +337,8 @@ namespace Microsoft.IdentityModel.Protocols
         {
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
+            // direct refresh request
+            TrackRequestRefresh(IdentityModelTelemetryUtil.Direct);
             if (now >= DateTimeUtil.Add(_lastRequestRefresh.UtcDateTime, RefreshInterval) || _isFirstRefreshRequest)
             {
                 _isFirstRefreshRequest = false;
@@ -340,15 +350,28 @@ namespace Microsoft.IdentityModel.Protocols
             }
         }
 
-        internal void TrackGetConfiguration(long methodStartTicks, string refreshReason, string operationStatus, string exceptionType)
+        internal static void TrackRetrievalDuration(TimeSpan duration)
+        {
+            IdentityModelTelemetryUtil.RecordTotalDuration(
+                (long)duration.TotalMilliseconds);
+        }
+
+        internal static void TrackRetrievalDuration(TimeSpan duration, string exception)
+        {
+            IdentityModelTelemetryUtil.RecordTotalDuration(
+                (long)duration.TotalMilliseconds,
+                exception);
+        }
+
+        internal static void TrackRequestRefresh(string operationStatus)
         {
             IdentityModelTelemetryUtil.IncrementConfigurationManagerCounter(
-                    MetadataAddress, refreshReason, operationStatus, exceptionType);
+                operationStatus);
+        }
 
-            IdentityModelTelemetryUtil.RecordTotalDuration(
-                (WatchUtility.Watch.Elapsed.Ticks - methodStartTicks) / TimeSpan.TicksPerMillisecond,
-                MetadataAddress,
-                refreshReason,
+        internal static void TrackRequestRefresh(string operationStatus, string exceptionType)
+        {
+            IdentityModelTelemetryUtil.IncrementConfigurationManagerCounter(
                 operationStatus,
                 exceptionType);
         }

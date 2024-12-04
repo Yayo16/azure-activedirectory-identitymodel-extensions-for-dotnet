@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Net.Http;
-using System.Diagnostics;
 
 namespace Microsoft.IdentityModel.Logging
 {
@@ -25,19 +25,15 @@ namespace Microsoft.IdentityModel.Logging
         };
 
         // Static attribute tags
-        internal const string WilsonVersionTag = "WilsonVersion";
+        internal const string IdentityModelVersionTag = "IdentityModelVersion";
         internal const string MetadataAddressTag = "MetadataAddress";
-        internal const string RefreshReasonTag = "RefreshReason";
         internal const string OperationStatusTag = "OperationStatus";
         internal const string ExceptionTypeTag = "ExceptionType";
 
-        // Validation result values
-        internal const string Success = "Success";
-        internal const string Failure = "Failure";
-
-        // Configuration manager refresh reasons
-        internal const string Requested = "Requested";
-        internal const string Scheduled = "Scheduled";
+        // Configuration manager refresh statuses
+        internal const string Automatic = "Automatic";
+        internal const string Direct = "Direct";
+        internal const string FirstRefresh = "FirstRefresh";
         internal const string LKG = "LastKnownGood";
 
         // Configuration manager exception types
@@ -159,16 +155,24 @@ namespace Microsoft.IdentityModel.Logging
         }
 
         internal static void IncrementConfigurationManagerCounter(
-            string metadataAddress,
-            string refreshReason,
+            string operationStatus)
+        {
+            var tagList = new TagList()
+            {
+                { IdentityModelVersionTag, ClientVer },
+                { OperationStatusTag, operationStatus }
+            };
+
+            IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
+        }
+
+        internal static void IncrementConfigurationManagerCounter(
             string operationStatus,
             string exceptionType)
         {
             var tagList = new TagList()
             {
-                { WilsonVersionTag, ClientVer },
-                { MetadataAddressTag, metadataAddress },
-                { RefreshReasonTag, refreshReason},
+                { IdentityModelVersionTag, ClientVer },
                 { OperationStatusTag, operationStatus },
                 { ExceptionTypeTag, exceptionType }
             };
@@ -176,23 +180,25 @@ namespace Microsoft.IdentityModel.Logging
             IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
         }
 
-        internal static void RecordTotalDuration(
-            long durationInMs,
-            string metadataAddress,
-            string refreshReason,
-            string operationStatus,
-            string exceptionType)
+        internal static void RecordTotalDuration(long totalMilliseconds)
         {
             var tagList = new TagList()
             {
-                { WilsonVersionTag, ClientVer },
-                { MetadataAddressTag, metadataAddress },
-                { RefreshReasonTag, refreshReason},
-                { OperationStatusTag, operationStatus },
-                { ExceptionTypeTag, exceptionType }
+                { IdentityModelVersionTag, ClientVer }
             };
 
-            IdentityModelTelemetry.RecordTotalDurationHistogram(durationInMs, tagList);
+            IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
+        }
+
+        internal static void RecordTotalDuration(long totalMilliseconds, string exception)
+        {
+            var tagList = new TagList()
+            {
+                { IdentityModelVersionTag, ClientVer },
+                { ExceptionTypeTag, exception }
+            };
+
+            IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
         }
     }
 }
