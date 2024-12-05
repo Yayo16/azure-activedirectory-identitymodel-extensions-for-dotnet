@@ -32,6 +32,13 @@ namespace Microsoft.IdentityModel.Tokens
         internal delegate void ItemExpired(TValue Value);
         internal delegate void ItemRemoved(TValue Value);
         internal delegate bool ShouldRemove(TValue Value);
+        private long _numberOfCompactions;
+        private long _numberOfProcessCompactedValues;
+        private long _numberOfEventQTaskActions;
+        private long _numberOfTryDeque;
+        private long _numberOfAddActionToEventQueue;
+        private long _numberOfStartEventQueueTaskIfNotRunning;
+        private long _numberOfTaskRunEventQueueTaskAction;
 
         private readonly int _capacity;
         private List<LRUCacheItem<TKey, TValue>> _compactedItems = new List<LRUCacheItem<TKey, TValue>>();
@@ -168,6 +175,7 @@ namespace Microsoft.IdentityModel.Tokens
         private void AddActionToEventQueue(Action action)
         {
             _eventQueue.Enqueue(action);
+            _numberOfAddActionToEventQueue++;
 
             // start the event queue task if it is not running
             StartEventQueueTaskIfNotRunning();
@@ -187,6 +195,7 @@ namespace Microsoft.IdentityModel.Tokens
         private void EventQueueTaskAction()
         {
             Interlocked.Increment(ref _taskCount);
+            _numberOfEventQTaskActions++;
             try
             {
                 // Keep running until the queue is empty or the AppDomain is about to be unloaded or the application is ready to exit.
@@ -212,6 +221,7 @@ namespace Microsoft.IdentityModel.Tokens
                         // process all events in the queue and exit
                         if (_eventQueue.TryDequeue(out var action))
                         {
+                            _numberOfTryDeque++;
                             action?.Invoke();
                         }
                         else if (DateTime.UtcNow > _eventQueueTaskStopTime) // no more event to be processed, exit if expired
@@ -322,6 +332,7 @@ namespace Microsoft.IdentityModel.Tokens
 #pragma warning disable CA1031 // Do not catch general exception types
             try
             {
+                _numberOfProcessCompactedValues++;
                 for (int i = _compactedItems.Count - 1; i >= 0; i--)
                 {
                     if ((OnShouldRemoveFromCompactedList == null) || OnShouldRemoveFromCompactedList(_compactedItems[i].Value))
@@ -378,6 +389,7 @@ namespace Microsoft.IdentityModel.Tokens
         {
             try
             {
+                _numberOfCompactions++;
                 int newCacheSize = CalculateNewCacheSize();
                 while (_map.Count > newCacheSize)
                 {
@@ -463,7 +475,7 @@ namespace Microsoft.IdentityModel.Tokens
             else
             {
                 // if cache is at _maxCapacityPercentage, trim it by _compactionPercentage
-                if ((double)_map.Count / _capacity >= _maxCapacityPercentage)
+                if (((double)_map.Count / _capacity >= _maxCapacityPercentage) || _map.Count > _capacity)
                 {
                     if (Interlocked.CompareExchange(ref _compactValuesState, ActionQueuedOrRunning, ActionNotQueued) == ActionNotQueued)
                     {
@@ -531,6 +543,7 @@ namespace Microsoft.IdentityModel.Tokens
             // This scenario is unlikely to happen, as it can only occur if the event queue task ALREADY checked the queue and it was empty, and the new event was added AFTER that check but BEFORE the
             // event queue task set the _eventQueueTaskState to EventQueueTaskStopped.
 
+            _numberOfStartEventQueueTaskIfNotRunning++;
             if (Interlocked.CompareExchange(ref _eventQueueTaskState, EventQueueTaskDoNotStop, EventQueueTaskRunning) == EventQueueTaskRunning)
             {
                 return;
@@ -541,6 +554,7 @@ namespace Microsoft.IdentityModel.Tokens
             // the caller's TaskScheduler (if there is one) as some custom TaskSchedulers might be single-threaded and its execution can be blocked.
             if (Interlocked.CompareExchange(ref _eventQueueTaskState, EventQueueTaskRunning, EventQueueTaskStopped) == EventQueueTaskStopped)
             {
+                _numberOfTaskRunEventQueueTaskAction++;
                 _ = Task.Run(EventQueueTaskAction);
             }
         }
