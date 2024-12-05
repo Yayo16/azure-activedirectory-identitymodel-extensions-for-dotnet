@@ -35,6 +35,7 @@ namespace System.IdentityModel.Tokens.Jwt
         private Dictionary<string, string> _outboundAlgorithmMap;
         private static string _shortClaimType = _namespace + "/ShortTypeName";
         private bool _mapInboundClaims = DefaultMapInboundClaims;
+        private readonly ConfigurationManagerTelemetryInstrumentation _telemetryClient = new();
 
         /// <summary>
         /// Default claim type mapping for inbound claims.
@@ -887,6 +888,10 @@ namespace System.IdentityModel.Tokens.Jwt
                     // where a new valid configuration was somehow published during validation time.
                     if (currentConfiguration != null)
                     {
+                        _telemetryClient.IncrementOperationCounter(
+                            IdentityModelTelemetryUtil.ClientVer,
+                            TelemetryConstants.LKG);
+
                         validationParameters.ConfigurationManager.RequestRefresh();
                         validationParameters.RefreshBeforeValidation = true;
                         var lastConfig = currentConfiguration;

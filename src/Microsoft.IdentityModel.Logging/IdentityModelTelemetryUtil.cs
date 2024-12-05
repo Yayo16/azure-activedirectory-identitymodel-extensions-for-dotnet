@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 using System.Net.Http;
 
@@ -23,23 +22,6 @@ namespace Microsoft.IdentityModel.Logging
             [skuTelemetry] = ClientSku,
             [versionTelemetry] = ClientVer
         };
-
-        // Static attribute tags
-        internal const string IdentityModelVersionTag = "IdentityModelVersion";
-        internal const string MetadataAddressTag = "MetadataAddress";
-        internal const string OperationStatusTag = "OperationStatus";
-        internal const string ExceptionTypeTag = "ExceptionType";
-
-        // Configuration manager refresh statuses
-        internal const string Automatic = "Automatic";
-        internal const string Direct = "Direct";
-        internal const string FirstRefresh = "FirstRefresh";
-        internal const string LKG = "LastKnownGood";
-
-        // Configuration manager exception types
-        internal const string ConfigurationInvalid = "ConfigurationInvalid";
-        internal const string ConfigurationRetrievalFailed = "ConfigurationRetrievalFailed";
-
 
         /// <summary>
         /// Get the string that represents the client SKU.
@@ -154,51 +136,51 @@ namespace Microsoft.IdentityModel.Logging
             return true;
         }
 
-        internal static void IncrementConfigurationManagerCounter(
-            string operationStatus)
-        {
-            var tagList = new TagList()
-            {
-                { IdentityModelVersionTag, ClientVer },
-                { OperationStatusTag, operationStatus }
-            };
+        //internal static void IncrementConfigurationManagerCounter(
+        //    string operationStatus)
+        //{
+        //    var tagList = new TagList()
+        //    {
+        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
+        //        { TelemetryConstants.OperationStatusTag, operationStatus }
+        //    };
 
-            IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
-        }
+        //    IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
+        //}
 
-        internal static void IncrementConfigurationManagerCounter(
-            string operationStatus,
-            string exceptionType)
-        {
-            var tagList = new TagList()
-            {
-                { IdentityModelVersionTag, ClientVer },
-                { OperationStatusTag, operationStatus },
-                { ExceptionTypeTag, exceptionType }
-            };
+        //internal static void IncrementConfigurationManagerCounter(
+        //    string operationStatus,
+        //    string exceptionType)
+        //{
+        //    var tagList = new TagList()
+        //    {
+        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
+        //        { TelemetryConstants.OperationStatusTag, operationStatus },
+        //        { TelemetryConstants.ExceptionTypeTag, exceptionType }
+        //    };
 
-            IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
-        }
+        //    IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
+        //}
 
-        internal static void RecordTotalDuration(long totalMilliseconds)
-        {
-            var tagList = new TagList()
-            {
-                { IdentityModelVersionTag, ClientVer }
-            };
+        //internal static void RecordTotalDuration(long totalMilliseconds)
+        //{
+        //    var tagList = new TagList()
+        //    {
+        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer }
+        //    };
 
-            IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
-        }
+        //    IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
+        //}
 
-        internal static void RecordTotalDuration(long totalMilliseconds, string exception)
-        {
-            var tagList = new TagList()
-            {
-                { IdentityModelVersionTag, ClientVer },
-                { ExceptionTypeTag, exception }
-            };
+        //internal static void RecordTotalDuration(long totalMilliseconds, string exception)
+        //{
+        //    var tagList = new TagList()
+        //    {
+        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
+        //        { TelemetryConstants.ExceptionTypeTag, exception }
+        //    };
 
-            IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
-        }
+        //    IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
+        //}
     }
 }

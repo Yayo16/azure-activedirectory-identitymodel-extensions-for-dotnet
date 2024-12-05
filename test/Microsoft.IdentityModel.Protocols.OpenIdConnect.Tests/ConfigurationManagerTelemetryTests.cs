@@ -77,10 +77,8 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { IdentityModelTelemetryUtil.MetadataAddressTag, OpenIdConfigData.AccountsGoogle },
-                        { IdentityModelTelemetryUtil.RefreshReasonTag, IdentityModelTelemetryUtil.Requested },
-                        { IdentityModelTelemetryUtil.OperationStatusTag, IdentityModelTelemetryUtil.Success },
-                        { IdentityModelTelemetryUtil.ExceptionTypeTag, string.Empty }
+                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.AccountsGoogle },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.Automatic },
                     }
                 },
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Success-retrieve from cache")
@@ -91,10 +89,8 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                     SecondRequest = true,
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { IdentityModelTelemetryUtil.MetadataAddressTag, OpenIdConfigData.AADCommonUrl },
-                        { IdentityModelTelemetryUtil.RefreshReasonTag, IdentityModelTelemetryUtil.LKG },
-                        { IdentityModelTelemetryUtil.OperationStatusTag, IdentityModelTelemetryUtil.Success },
-                        { IdentityModelTelemetryUtil.ExceptionTypeTag, string.Empty }
+                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.AADCommonUrl },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.Direct },
                     }
                 },
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Failure-invalid metadata address")
@@ -104,10 +100,8 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { IdentityModelTelemetryUtil.MetadataAddressTag, OpenIdConfigData.HttpsBadUri },
-                        { IdentityModelTelemetryUtil.RefreshReasonTag, IdentityModelTelemetryUtil.Requested },
-                        { IdentityModelTelemetryUtil.OperationStatusTag, IdentityModelTelemetryUtil.Failure },
-                        { IdentityModelTelemetryUtil.ExceptionTypeTag, IdentityModelTelemetryUtil.ConfigurationRetrievalFailed }
+                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.HttpsBadUri },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.FirstRefresh },
                     }
                 },
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Failure-invalid config")
@@ -118,10 +112,8 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator() { MinimumNumberOfKeys = 3 },
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { IdentityModelTelemetryUtil.MetadataAddressTag, OpenIdConfigData.JsonFile },
-                        { IdentityModelTelemetryUtil.RefreshReasonTag, IdentityModelTelemetryUtil.Requested },
-                        { IdentityModelTelemetryUtil.OperationStatusTag, IdentityModelTelemetryUtil.Failure },
-                        { IdentityModelTelemetryUtil.ExceptionTypeTag, IdentityModelTelemetryUtil.ConfigurationInvalid }
+                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.JsonFile },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.LKG },
                     }
                 },
             };

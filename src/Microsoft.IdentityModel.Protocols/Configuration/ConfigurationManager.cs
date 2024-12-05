@@ -36,6 +36,7 @@ namespace Microsoft.IdentityModel.Protocols
         private int _configurationRetrieverState = ConfigurationRetrieverIdle;
 
         internal TimeProvider _timeProvider = TimeProvider.System;
+        internal static readonly ConfigurationManagerTelemetryInstrumentation _telemetryClient = new();
 
         /// <summary>
         /// Instantiates a new <see cref="ConfigurationManager{T}"/> that manages automatic and controls refreshing on configuration data.
@@ -194,14 +195,14 @@ namespace Microsoft.IdentityModel.Protocols
                                     result.ErrorMessage));
 
                             TrackRequestRefresh(
-                                IdentityModelTelemetryUtil.FirstRefresh,
+                                TelemetryConstants.FirstRefresh,
                                 ex.GetType().ToString());
 
                             throw LogHelper.LogExceptionMessage(ex);
                         }
                     }
 
-                    TrackRequestRefresh(IdentityModelTelemetryUtil.FirstRefresh);
+                    TrackRequestRefresh(TelemetryConstants.FirstRefresh);
                     UpdateConfiguration(configuration);
                 }
                 catch (Exception ex)
@@ -209,7 +210,7 @@ namespace Microsoft.IdentityModel.Protocols
                     // counter for failure first time
                     fetchMetadataFailure = ex;
                     TrackRequestRefresh(
-                        IdentityModelTelemetryUtil.FirstRefresh,
+                        TelemetryConstants.FirstRefresh,
                         ex.GetType().ToString());
 
                     LogHelper.LogExceptionMessage(
@@ -230,6 +231,7 @@ namespace Microsoft.IdentityModel.Protocols
             {
                 if (Interlocked.CompareExchange(ref _configurationRetrieverState, ConfigurationRetrieverRunning, ConfigurationRetrieverIdle) == ConfigurationRetrieverIdle)
                 {
+                    TrackRequestRefresh(TelemetryConstants.Automatic);
                     _ = Task.Run(UpdateCurrentConfiguration, CancellationToken.None);
                 }
             }
@@ -337,8 +339,7 @@ namespace Microsoft.IdentityModel.Protocols
         {
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
-            // direct refresh request
-            TrackRequestRefresh(IdentityModelTelemetryUtil.Direct);
+            TrackRequestRefresh(TelemetryConstants.Direct);
             if (now >= DateTimeUtil.Add(_lastRequestRefresh.UtcDateTime, RefreshInterval) || _isFirstRefreshRequest)
             {
                 _isFirstRefreshRequest = false;
@@ -352,26 +353,30 @@ namespace Microsoft.IdentityModel.Protocols
 
         internal static void TrackRetrievalDuration(TimeSpan duration)
         {
-            IdentityModelTelemetryUtil.RecordTotalDuration(
+            _telemetryClient.LogOperationDuration(
+                IdentityModelTelemetryUtil.ClientVer,
                 (long)duration.TotalMilliseconds);
         }
 
         internal static void TrackRetrievalDuration(TimeSpan duration, string exception)
         {
-            IdentityModelTelemetryUtil.RecordTotalDuration(
+            _telemetryClient.LogOperationDuration(
+                IdentityModelTelemetryUtil.ClientVer,
                 (long)duration.TotalMilliseconds,
                 exception);
         }
 
         internal static void TrackRequestRefresh(string operationStatus)
         {
-            IdentityModelTelemetryUtil.IncrementConfigurationManagerCounter(
+            _telemetryClient.IncrementOperationCounter(
+                IdentityModelTelemetryUtil.ClientVer,
                 operationStatus);
         }
 
         internal static void TrackRequestRefresh(string operationStatus, string exceptionType)
         {
-            IdentityModelTelemetryUtil.IncrementConfigurationManagerCounter(
+            _telemetryClient.IncrementOperationCounter(
+                IdentityModelTelemetryUtil.ClientVer,
                 operationStatus,
                 exceptionType);
         }

@@ -24,7 +24,7 @@ namespace Microsoft.IdentityModel.Logging
         /// <summary>
         /// Counter to capture requests to configuration manager.
         /// </summary>
-        internal const string IdentityModelConfigurationManagerCounterName = "WilsonConfigurationManagerCounter";
+        internal const string IdentityModelConfigurationManagerCounterName = "IdentityModelConfigurationManagerCounter";
         internal const string IdentityModelConfigurationManagerCounterDescription = "Counter capturing configuration manager operations.";
         internal static readonly Counter<long> ConfigurationManagerCounter = IdentityModelMeter.CreateCounter<long>(IdentityModelConfigurationManagerCounterName, description: IdentityModelConfigurationManagerCounterDescription);
 

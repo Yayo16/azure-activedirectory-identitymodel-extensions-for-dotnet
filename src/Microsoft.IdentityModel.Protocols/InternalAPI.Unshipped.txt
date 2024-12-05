@@ -3,3 +3,4 @@ static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRequestRef
 static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRequestRefresh(string operationStatus, string exceptionType) -> void
 static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRetrievalDuration(System.TimeSpan duration) -> void
 static Microsoft.IdentityModel.Protocols.ConfigurationManager<T>.TrackRetrievalDuration(System.TimeSpan duration, string exception) -> void
+static readonly Microsoft.IdentityModel.Protocols.ConfigurationManager<T>._telemetryClient -> Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation
