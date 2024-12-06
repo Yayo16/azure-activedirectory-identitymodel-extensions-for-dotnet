@@ -3,8 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Logging.Tests;
+using Microsoft.IdentityModel.Protocols.Configuration;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect.Configuration;
 using Microsoft.IdentityModel.TestUtils;
 using OpenTelemetry;
@@ -36,34 +39,76 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                 .Build();
         }
 
-        [Theory, MemberData(nameof(GetConfiguration_ExpectedTagList_TheoryData), DisableDiscoveryEnumeration = true)]
-        public async Task GetConfigurationAsync_ExpectedTagList(ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration> theoryData)
+        [Fact]
+        public async Task RequestRefresh_ExpectedTagsExist()
         {
+            // arrange
+            var testTelemetryClient = new MockTelemetryInstrumentation();
+            // mock up retirever to return something quickly 
+            var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+                OpenIdConfigData.AccountsGoogle,
+                new OpenIdConnectConfigurationRetriever(),
+                new HttpDocumentRetriever(),
+                new OpenIdConnectConfigurationValidator())
+            {
+                _telemetryClient = testTelemetryClient
+            };
+
+            // act
+            configurationManager.RequestRefresh();
+            //// Wait for UpdateCurrentConfiguration to complete
+            while (TestUtilities.GetField(configurationManager, "_currentConfiguration") == null)
+            {
+                await Task.Delay(100);
+            }
+
+            // assert
+            var expectedCounterTagList = new Dictionary<string, object>
+            {
+                { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer },
+                { TelemetryConstants.OperationStatusTag, TelemetryConstants.Direct },
+            };
+
+            var expectedHistogramTagList = new Dictionary<string, object>
+            {
+                { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer }
+            };
+
+            Assert.Equal(expectedCounterTagList, testTelemetryClient.ExportedItems);
+            Assert.Equal(expectedHistogramTagList, testTelemetryClient.ExportedHistogramItems);
+        }
+
+        [Theory, MemberData(nameof(GetConfiguration_ExpectedTagList_TheoryData), DisableDiscoveryEnumeration = true)]
+        public async Task GetConfigurationAsync_ExpectedTagsExist(ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration> theoryData)
+        {
+            var testTelemetryClient = new MockTelemetryInstrumentation();
+
             var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
                 theoryData.MetadataAddress,
                 new OpenIdConnectConfigurationRetriever(),
                 theoryData.DocumentRetriever,
-                theoryData.ConfigurationValidator);
+                theoryData.ConfigurationValidator)
+            {
+                _telemetryClient = testTelemetryClient
+            };
 
             try
             {
                 await configurationManager.GetConfigurationAsync();
-
-                if (theoryData.SecondRequest)
+                if (theoryData.SyncAfter != null)
                 {
+                    testTelemetryClient.ClearExportedItems();
+                    TestUtilities.SetField(configurationManager, "_syncAfter", theoryData.SyncAfter);
                     await configurationManager.GetConfigurationAsync();
                 }
+
             }
             catch (Exception)
             {
                 // Ignore exceptions
             }
-            MeterProvider.ForceFlush();
-            MeterProvider.Shutdown();
-            MeterProvider.Dispose();
 
-            VerifyConfigurationManagerCounter(ExportedItems, theoryData.ExpectedTagList);
-            VerifyHistogramReporting(ExportedItems, theoryData.ExpectedTagList);
+            Assert.Equal(theoryData.ExpectedTagList, testTelemetryClient.ExportedItems);
         }
 
         public static TheoryData<ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>> GetConfiguration_ExpectedTagList_TheoryData()
@@ -73,35 +118,22 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Success-retrieve from endpoint")
                 {
                     MetadataAddress = OpenIdConfigData.AccountsGoogle,
-                    DocumentRetriever = new HttpDocumentRetriever(),
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.AccountsGoogle },
-                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.Automatic },
-                    }
-                },
-                new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Success-retrieve from cache")
-                {
-                    MetadataAddress = OpenIdConfigData.AADCommonUrl,
-                    DocumentRetriever = new HttpDocumentRetriever(),
-                    ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
-                    SecondRequest = true,
-                    ExpectedTagList = new Dictionary<string, object>
-                    {
-                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.AADCommonUrl },
-                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.Direct },
+                        { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.FirstRefresh },
                     }
                 },
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Failure-invalid metadata address")
                 {
                     MetadataAddress = OpenIdConfigData.HttpsBadUri,
-                    DocumentRetriever = new HttpDocumentRetriever(),
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.HttpsBadUri },
+                        { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer },
                         { TelemetryConstants.OperationStatusTag, TelemetryConstants.FirstRefresh },
+                        { TelemetryConstants.ExceptionTypeTag, new IOException().GetType().ToString() },
                     }
                 },
                 new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Failure-invalid config")
@@ -112,66 +144,23 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
                     ConfigurationValidator = new OpenIdConnectConfigurationValidator() { MinimumNumberOfKeys = 3 },
                     ExpectedTagList = new Dictionary<string, object>
                     {
-                        { TelemetryConstants.MetadataAddressTag, OpenIdConfigData.JsonFile },
-                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.LKG },
+                        { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.FirstRefresh },
+                        { TelemetryConstants.ExceptionTypeTag, new InvalidConfigurationException().GetType().ToString() },
+                    }
+                },
+                new ConfigurationManagerTelemetryTheoryData<OpenIdConnectConfiguration>("Success-refresh")
+                {
+                    MetadataAddress = OpenIdConfigData.AADCommonUrl,
+                    ConfigurationValidator = new OpenIdConnectConfigurationValidator(),
+                    SyncAfter = DateTime.UtcNow - TimeSpan.FromDays(2),
+                    ExpectedTagList = new Dictionary<string, object>
+                    {
+                        { TelemetryConstants.IdentityModelVersionTag, IdentityModelTelemetryUtil.ClientVer },
+                        { TelemetryConstants.OperationStatusTag, TelemetryConstants.Automatic },
                     }
                 },
             };
-        }
-
-        private void VerifyConfigurationManagerCounter(List<Metric> exportedMetrics, Dictionary<string, object> expectedTagList)
-        {
-            var expectedTagsFound = false;
-            foreach (Metric metric in exportedMetrics)
-            {
-                if (!metric.Name.Equals(IdentityModelTelemetry.IdentityModelConfigurationManagerCounterName))
-                    continue;
-
-                foreach (MetricPoint metricPoint in metric.GetMetricPoints())
-                {
-                    if (MatchTagValues(metricPoint, expectedTagList))
-                        expectedTagsFound = true;
-                }
-            }
-            Assert.True(expectedTagsFound);
-        }
-
-        private void VerifyHistogramReporting(List<Metric> exportedMetrics, Dictionary<string, object> expectedTagList)
-        {
-            var histogramMetricFound = false;
-            foreach (Metric metric in exportedMetrics)
-            {
-                if (!metric.Name.Equals(IdentityModelTelemetry.TotalDurationHistogramName))
-                    continue;
-
-                Assert.Equal(MetricType.Histogram, metric.MetricType);
-                foreach (var metricPoint in metric.GetMetricPoints())
-                {
-                    if (MatchTagValues(metricPoint, expectedTagList))
-                        histogramMetricFound = true;
-                }
-            }
-            Assert.True(histogramMetricFound);
-        }
-
-        private bool MatchTagValues(MetricPoint metricPoint, Dictionary<string, object> expectedTagList)
-        {
-            foreach (var expectedTag in expectedTagList.Keys)
-            {
-                Dictionary<string, object> tags = [];
-                foreach (var tag in metricPoint.Tags)
-                {
-                    tags[tag.Key] = tag.Value?.ToString() ?? "null";
-                }
-
-                if (!tags.ContainsKey(expectedTag))
-                    return false;
-
-                if (tags[expectedTag] != expectedTagList[expectedTag])
-                    return false;
-            }
-
-            return true;
         }
     }
 
@@ -181,11 +170,11 @@ namespace Microsoft.IdentityModel.Protocols.OpenIdConnect.Tests
 
         public string MetadataAddress { get; set; }
 
-        public IDocumentRetriever DocumentRetriever { get; set; }
+        public IDocumentRetriever DocumentRetriever { get; set; } = new HttpDocumentRetriever();
 
         public IConfigurationValidator<T> ConfigurationValidator { get; set; }
 
-        public bool SecondRequest { get; set; } = false;
+        public DateTimeOffset? SyncAfter { get; set; } = null;
 
         public Dictionary<string, object> ExpectedTagList { get; set; }
     }

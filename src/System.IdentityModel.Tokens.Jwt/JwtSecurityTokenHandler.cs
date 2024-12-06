@@ -35,7 +35,8 @@ namespace System.IdentityModel.Tokens.Jwt
         private Dictionary<string, string> _outboundAlgorithmMap;
         private static string _shortClaimType = _namespace + "/ShortTypeName";
         private bool _mapInboundClaims = DefaultMapInboundClaims;
-        private readonly ConfigurationManagerTelemetryInstrumentation _telemetryClient = new();
+
+        internal ITelemetryInstrumentation _telemetryClient = new ConfigurationManagerTelemetryInstrumentation();
 
         /// <summary>
         /// Default claim type mapping for inbound claims.
@@ -889,7 +890,6 @@ namespace System.IdentityModel.Tokens.Jwt
                     if (currentConfiguration != null)
                     {
                         _telemetryClient.IncrementOperationCounter(
-                            IdentityModelTelemetryUtil.ClientVer,
                             TelemetryConstants.LKG);
 
                         validationParameters.ConfigurationManager.RequestRefresh();

@@ -7,7 +7,7 @@ namespace Microsoft.IdentityModel.Logging
 {
     internal class ConfigurationManagerTelemetryInstrumentation : ITelemetryInstrumentation
     {
-        public void IncrementOperationCounter(string clientVer, string operationStatus)
+        public void IncrementOperationCounter(string operationStatus)
         {
             var tagList = new TagList()
             {
@@ -18,7 +18,7 @@ namespace Microsoft.IdentityModel.Logging
             IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
         }
 
-        public void IncrementOperationCounter(string clientVer, string operationStatus, string exceptionType)
+        public void IncrementOperationCounter(string operationStatus, string exceptionType)
         {
             var tagList = new TagList()
             {
@@ -30,7 +30,7 @@ namespace Microsoft.IdentityModel.Logging
             IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
         }
 
-        public void LogOperationDuration(string clientVer, long durationInMilliseconds)
+        public void LogOperationDuration(long durationInMilliseconds)
         {
             var tagList = new TagList()
             {
@@ -40,7 +40,7 @@ namespace Microsoft.IdentityModel.Logging
             IdentityModelTelemetry.RecordTotalDurationHistogram(durationInMilliseconds, tagList);
         }
 
-        public void LogOperationDuration(string clientVer, long durationInMilliseconds, string exceptionType)
+        public void LogOperationDuration(long durationInMilliseconds, string exceptionType)
         {
             var tagList = new TagList()
             {

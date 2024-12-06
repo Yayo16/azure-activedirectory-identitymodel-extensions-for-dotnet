@@ -135,52 +135,5 @@ namespace Microsoft.IdentityModel.Logging
             telemetryData[key] = value;
             return true;
         }
-
-        //internal static void IncrementConfigurationManagerCounter(
-        //    string operationStatus)
-        //{
-        //    var tagList = new TagList()
-        //    {
-        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
-        //        { TelemetryConstants.OperationStatusTag, operationStatus }
-        //    };
-
-        //    IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
-        //}
-
-        //internal static void IncrementConfigurationManagerCounter(
-        //    string operationStatus,
-        //    string exceptionType)
-        //{
-        //    var tagList = new TagList()
-        //    {
-        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
-        //        { TelemetryConstants.OperationStatusTag, operationStatus },
-        //        { TelemetryConstants.ExceptionTypeTag, exceptionType }
-        //    };
-
-        //    IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
-        //}
-
-        //internal static void RecordTotalDuration(long totalMilliseconds)
-        //{
-        //    var tagList = new TagList()
-        //    {
-        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer }
-        //    };
-
-        //    IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
-        //}
-
-        //internal static void RecordTotalDuration(long totalMilliseconds, string exception)
-        //{
-        //    var tagList = new TagList()
-        //    {
-        //        { TelemetryConstants.IdentityModelVersionTag, ClientVer },
-        //        { TelemetryConstants.ExceptionTypeTag, exception }
-        //    };
-
-        //    IdentityModelTelemetry.RecordTotalDurationHistogram(totalMilliseconds, tagList);
-        //}
     }
 }

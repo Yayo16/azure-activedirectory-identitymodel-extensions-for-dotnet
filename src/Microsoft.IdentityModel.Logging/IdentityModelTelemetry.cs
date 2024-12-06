@@ -34,7 +34,7 @@ namespace Microsoft.IdentityModel.Logging
         internal static readonly Histogram<long> TotalDurationHistogram = IdentityModelMeter.CreateHistogram<long>(
             TotalDurationHistogramName,
             unit: "ms",
-            description: "Performance of getting configuration calls total latency");
+            description: "Configuration retrieval latency during configuration manager operations.");
 
         internal static void RecordTotalDurationHistogram(long requestDurationInMs, in TagList tagList)
         {
