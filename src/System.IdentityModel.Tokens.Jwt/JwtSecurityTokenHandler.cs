@@ -36,7 +36,7 @@ namespace System.IdentityModel.Tokens.Jwt
         private static string _shortClaimType = _namespace + "/ShortTypeName";
         private bool _mapInboundClaims = DefaultMapInboundClaims;
 
-        internal ITelemetryInstrumentation _telemetryClient = new ConfigurationManagerTelemetryInstrumentation();
+        internal ITelemetryInstrumentation _telemetryClient = new TelemetryInstrumentation();
 
         /// <summary>
         /// Default claim type mapping for inbound claims.

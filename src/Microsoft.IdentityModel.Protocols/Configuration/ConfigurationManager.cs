@@ -36,7 +36,7 @@ namespace Microsoft.IdentityModel.Protocols
         private int _configurationRetrieverState = ConfigurationRetrieverIdle;
 
         internal TimeProvider _timeProvider = TimeProvider.System;
-        internal ITelemetryInstrumentation _telemetryClient = new ConfigurationManagerTelemetryInstrumentation();
+        internal ITelemetryInstrumentation _telemetryClient = new TelemetryInstrumentation();
 
         /// <summary>
         /// Instantiates a new <see cref="ConfigurationManager{T}"/> that manages automatic and controls refreshing on configuration data.

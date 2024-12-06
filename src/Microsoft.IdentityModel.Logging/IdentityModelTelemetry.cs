@@ -41,7 +41,7 @@ namespace Microsoft.IdentityModel.Logging
             TotalDurationHistogram.Record(requestDurationInMs, tagList);
         }
 
-        internal static void IncrementConfigurationManagerCounter(in TagList tagList)
+        internal static void IncrementOperationCounter(in TagList tagList)
         {
             ConfigurationManagerCounter.Add(1, tagList);
         }

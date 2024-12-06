@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Microsoft.IdentityModel.Logging
 {
-    internal class ConfigurationManagerTelemetryInstrumentation : ITelemetryInstrumentation
+    internal class TelemetryInstrumentation : ITelemetryInstrumentation
     {
         public void IncrementOperationCounter(string operationStatus)
         {
@@ -15,7 +15,7 @@ namespace Microsoft.IdentityModel.Logging
                 { TelemetryConstants.OperationStatusTag, operationStatus }
             };
 
-            IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
+            IdentityModelTelemetry.IncrementOperationCounter(tagList);
         }
 
         public void IncrementOperationCounter(string operationStatus, string exceptionType)
@@ -27,7 +27,7 @@ namespace Microsoft.IdentityModel.Logging
                 { TelemetryConstants.ExceptionTypeTag, exceptionType }
             };
 
-            IdentityModelTelemetry.IncrementConfigurationManagerCounter(tagList);
+            IdentityModelTelemetry.IncrementOperationCounter(tagList);
         }
 
         public void LogOperationDuration(long durationInMilliseconds)

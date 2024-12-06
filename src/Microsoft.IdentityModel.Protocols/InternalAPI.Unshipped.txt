@@ -1,19 +1,2 @@
-const Microsoft.IdentityModel.Logging.TelemetryConstants.Automatic = "Microsoft.IdentityModel.Protocols.Automatic" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.ConfigurationInvalid = "Microsoft.IdentityModel.Protocols.ConfigurationInvalid" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.ConfigurationRetrievalFailed = "Microsoft.IdentityModel.Protocols.ConfigurationRetrievalFailed" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.Direct = "Microsoft.IdentityModel.Protocols.Direct" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.ExceptionTypeTag = "ExceptionType" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.FirstRefresh = "Microsoft.IdentityModel.Protocols.FirstRefresh" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.IdentityModelVersionTag = "IdentityModelVersion" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.LKG = "Microsoft.IdentityModel.Protocols.LastKnownGood" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.MetadataAddressTag = "MetadataAddress" -> string
-const Microsoft.IdentityModel.Logging.TelemetryConstants.OperationStatusTag = "OperationStatus" -> string
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation.ConfigurationManagerTelemetryInstrumentation() -> void
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation.IncrementOperationCounter(string operationStatus) -> void
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation.IncrementOperationCounter(string operationStatus, string exceptionType) -> void
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation.LogOperationDuration(long durationInMilliseconds) -> void
-Microsoft.IdentityModel.Logging.ConfigurationManagerTelemetryInstrumentation.LogOperationDuration(long durationInMilliseconds, string exceptionType) -> void
-Microsoft.IdentityModel.Logging.TelemetryConstants
 Microsoft.IdentityModel.Protocols.ConfigurationManager<T>._telemetryClient -> Microsoft.IdentityModel.Logging.ITelemetryInstrumentation
 Microsoft.IdentityModel.Protocols.ConfigurationManager<T>._timeProvider -> System.TimeProvider
