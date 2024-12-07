@@ -39,6 +39,8 @@ namespace Microsoft.IdentityModel.Tokens
         private long _numberOfAddActionToEventQueue;
         private long _numberOfStartEventQueueTaskIfNotRunning;
         private long _numberOfTaskRunEventQueueTaskAction;
+        private long _numberOfTimesCountGtCapacity;
+        private long _numberOfTimesEnteredInterlockCapacity;
 
         private readonly int _capacity;
         private List<LRUCacheItem<TKey, TValue>> _compactedItems = new List<LRUCacheItem<TKey, TValue>>();
@@ -144,6 +146,7 @@ namespace Microsoft.IdentityModel.Tokens
             _timeForNextCompaction = DateTime.UtcNow.AddSeconds(_compactIntervalInSeconds);
             _eventQueueTaskStopTime = DateTime.UtcNow;
             _maintainLRU = maintainLRU;
+            _ = Task.Run(EventQueueTaskAction);
         }
 
         /// <summary>
@@ -178,7 +181,7 @@ namespace Microsoft.IdentityModel.Tokens
             _numberOfAddActionToEventQueue++;
 
             // start the event queue task if it is not running
-            StartEventQueueTaskIfNotRunning();
+            //StartEventQueueTaskIfNotRunning();
         }
 
         public bool Contains(TKey key)
@@ -202,7 +205,7 @@ namespace Microsoft.IdentityModel.Tokens
                 while (!_shouldStopImmediately)
                 {
                     // always set the state to EventQueueTaskRunning in case it was set to EventQueueTaskDoNotStop
-                    Interlocked.Exchange(ref _eventQueueTaskState, EventQueueTaskRunning);
+                    //Interlocked.Exchange(ref _eventQueueTaskState, EventQueueTaskRunning);
 
                     try
                     {
@@ -224,17 +227,17 @@ namespace Microsoft.IdentityModel.Tokens
                             _numberOfTryDeque++;
                             action?.Invoke();
                         }
-                        else if (DateTime.UtcNow > _eventQueueTaskStopTime) // no more event to be processed, exit if expired
-                        {
-                            // Setting _eventQueueTaskState = EventQueueTaskStopped if the _eventQueueStopTime has past and _eventQueueTaskState == EventQueueTaskRunning.
-                            // This means no other thread came in and it is safe to end this task.
-                            // If another thread adds new events while this task is still running, it will set the _eventQueueTaskState = EventQueueTaskDoNotStop instead of starting a new task.
-                            // The Interlocked.CompareExchange() call below will not succeed and the loop continues (until the event queue is empty and the _eventQueueTaskEndTime expires again).
-                            // This should prevent a rare (but theoretically possible) scenario caused by context switching.
-                            if (Interlocked.CompareExchange(ref _eventQueueTaskState, EventQueueTaskStopped, EventQueueTaskRunning) == EventQueueTaskRunning)
-                                break;
+                        //else if (DateTime.UtcNow > _eventQueueTaskStopTime) // no more event to be processed, exit if expired
+                        //{
+                        //    // Setting _eventQueueTaskState = EventQueueTaskStopped if the _eventQueueStopTime has past and _eventQueueTaskState == EventQueueTaskRunning.
+                        //    // This means no other thread came in and it is safe to end this task.
+                        //    // If another thread adds new events while this task is still running, it will set the _eventQueueTaskState = EventQueueTaskDoNotStop instead of starting a new task.
+                        //    // The Interlocked.CompareExchange() call below will not succeed and the loop continues (until the event queue is empty and the _eventQueueTaskEndTime expires again).
+                        //    // This should prevent a rare (but theoretically possible) scenario caused by context switching.
+                        //    if (Interlocked.CompareExchange(ref _eventQueueTaskState, EventQueueTaskStopped, EventQueueTaskRunning) == EventQueueTaskRunning)
+                        //        break;
 
-                        }
+                        //}
                         else // if empty, let the thread sleep for a specified number of milliseconds before attempting to retrieve another value from the queue
                         {
                             Thread.Sleep(_eventQueuePollingInterval);
@@ -250,7 +253,7 @@ namespace Microsoft.IdentityModel.Tokens
             finally
             {
                 Interlocked.Decrement(ref _taskCount);
-                Interlocked.Exchange(ref _eventQueueTaskState, EventQueueTaskStopped);
+                //Interlocked.Exchange(ref _eventQueueTaskState, EventQueueTaskStopped);
             }
         }
 
@@ -439,9 +442,9 @@ namespace Microsoft.IdentityModel.Tokens
             return DateTime.UtcNow.AddSeconds(EventQueueTaskIdleTimeoutInSeconds);
         }
 
-        public void SetValue(TKey key, TValue value)
+        public bool SetValue(TKey key, TValue value)
         {
-            SetValue(key, value, DateTime.MaxValue);
+            return SetValue(key, value, DateTime.MaxValue);
         }
 
         public bool SetValue(TKey key, TValue value, DateTime expirationTime)
@@ -477,8 +480,10 @@ namespace Microsoft.IdentityModel.Tokens
                 // if cache is at _maxCapacityPercentage, trim it by _compactionPercentage
                 if (((double)_map.Count / _capacity >= _maxCapacityPercentage) || _map.Count > _capacity)
                 {
+                    _numberOfTimesCountGtCapacity++;
                     if (Interlocked.CompareExchange(ref _compactValuesState, ActionQueuedOrRunning, ActionNotQueued) == ActionNotQueued)
                     {
+                        _numberOfTimesEnteredInterlockCapacity++;
                         if (_maintainLRU)
                             AddActionToEventQueue(CompactLRU);
                         else
@@ -494,22 +499,29 @@ namespace Microsoft.IdentityModel.Tokens
                     }
                 }
 
-                var newCacheItem = new LRUCacheItem<TKey, TValue>(key, value, expirationTime);
-
-                // add the new node to the _doubleLinkedList if _maintainLRU == true
-                if (_maintainLRU)
+                if (_compactValuesState == ActionNotQueued)
                 {
-                    var localNewCacheItem = newCacheItem; // avoid closure when !_maintainLRU
-                    var localThis = this;
-                    AddActionToEventQueue(() =>
-                    {
-                        // Add a remove operation in case two threads are trying to add the same value. Only the second remove will succeed in this case.
-                        localThis._doubleLinkedList.Remove(localNewCacheItem);
-                        localThis._doubleLinkedList.AddFirst(localNewCacheItem);
-                    });
-                }
+                    var newCacheItem = new LRUCacheItem<TKey, TValue>(key, value, expirationTime);
 
-                _map[key] = newCacheItem;
+                    // add the new node to the _doubleLinkedList if _maintainLRU == true
+                    if (_maintainLRU)
+                    {
+                        var localNewCacheItem = newCacheItem; // avoid closure when !_maintainLRU
+                        var localThis = this;
+                        AddActionToEventQueue(() =>
+                        {
+                            // Add a remove operation in case two threads are trying to add the same value. Only the second remove will succeed in this case.
+                            localThis._doubleLinkedList.Remove(localNewCacheItem);
+                            localThis._doubleLinkedList.AddFirst(localNewCacheItem);
+                        });
+                    }
+
+                    _map[key] = newCacheItem;
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             return true;

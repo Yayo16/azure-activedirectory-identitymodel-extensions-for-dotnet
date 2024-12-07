@@ -15,6 +15,7 @@ Microsoft.IdentityModel.Tokens.AudienceValidationError.TokenAudiences.get -> Sys
 Microsoft.IdentityModel.Tokens.AudienceValidationError.TokenAudiences.set -> void
 Microsoft.IdentityModel.Tokens.AudienceValidationError.ValidAudiences.get -> System.Collections.Generic.IList<string>
 Microsoft.IdentityModel.Tokens.AudienceValidationError.ValidAudiences.set -> void
+Microsoft.IdentityModel.Tokens.EventBasedLRUCache<TKey, TValue>.SetValue(TKey key, TValue value) -> bool
 Microsoft.IdentityModel.Tokens.IssuerSigningKeyValidationError
 Microsoft.IdentityModel.Tokens.IssuerSigningKeyValidationError.InvalidSigningKey.get -> Microsoft.IdentityModel.Tokens.SecurityKey
 Microsoft.IdentityModel.Tokens.IssuerSigningKeyValidationError.IssuerSigningKeyValidationError(Microsoft.IdentityModel.Tokens.MessageDetail messageDetail, Microsoft.IdentityModel.Tokens.ValidationFailureType validationFailureType, System.Type exceptionType, System.Diagnostics.StackFrame stackFrame, Microsoft.IdentityModel.Tokens.SecurityKey invalidSigningKey, System.Exception innerException = null) -> void
