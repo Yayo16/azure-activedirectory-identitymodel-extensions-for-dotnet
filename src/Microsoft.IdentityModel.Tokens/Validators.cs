@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.IdentityModel.Logging;
 
+
 namespace Microsoft.IdentityModel.Tokens
 {
     /// <summary>
@@ -336,9 +337,13 @@ namespace Microsoft.IdentityModel.Tokens
         /// <exception cref="ArgumentNullException"> if 'securityKey' is null and ValidateIssuerSigningKey is true.</exception>
         /// <exception cref="ArgumentNullException"> if 'securityToken' is null and ValidateIssuerSigningKey is true.</exception>
         /// <exception cref="ArgumentNullException"> if 'validationParameters' is null.</exception>
-        public static void ValidateIssuerSecurityKey(SecurityKey securityKey, SecurityToken securityToken, TokenValidationParameters validationParameters)
+        /public static string ArrayStrings =
+                    """
+                    "arrayValue", "arrayValue"
+                    """;
+                     securityKey, SecurityToken securityToken, TokenValidationParameters validationParameters)
         {
-            ValidateIssuerSecurityKey(securityKey, securityToken, validationParameters, configuration: null);
+            ParametersCheckTheoryData(securityKey, securityToken, validationParameters, configuration: null);
         }
 
         /// <summary>

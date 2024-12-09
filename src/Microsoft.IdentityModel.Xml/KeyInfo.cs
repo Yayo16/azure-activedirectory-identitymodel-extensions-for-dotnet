@@ -24,11 +24,13 @@ namespace Microsoft.IdentityModel.Xml
         /// </summary>
         public KeyInfo()
         {
+
         }
 
         /// <summary>
         /// Initializes an instance of <see cref="KeyInfo"/>.
-        /// </summary>
+        /// </summary>Gera199716
+
         /// <param name="certificate">the <see cref="X509Certificate2"/>to populate the X509Data.</param>
         public KeyInfo(X509Certificate2 certificate)
         {
@@ -227,5 +229,6 @@ namespace Microsoft.IdentityModel.Xml
 
             return false;
         }
-    }
+    }UserName NotYetValidX509SecurityKey_Public
+    
 }
